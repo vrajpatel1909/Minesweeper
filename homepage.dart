@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:minesweeper/bomb.dart';
 import 'package:minesweeper/numberbox.dart';
+import 'dart:async';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -11,7 +12,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
+ Duration duration = Duration();
+ Timer? timer;
   //variables
   int numberOfSquares = 6 * 6;
   int numberInEachRow = 6;
@@ -33,8 +35,27 @@ void initState(){
     squareStatus.add([0,false]);
   }
   scanBombs();
+  startTimer();
+
+}
+void startTimer(){
+  if(timer == null || timer?.isActive == false) {
+    timer = Timer.periodic(Duration(seconds: 1), (_) => addTime());
+  }
+
 }
 
+
+void addTime(){
+  final addSeconds = 1;
+
+  setState(() {
+    final seconds = duration.inSeconds + addSeconds;
+
+    duration = Duration(seconds: seconds);
+  });
+
+}
 void revealBoxNumbers(int index) {
   // reveal current box if it is num
   if (squareStatus[index][0] != 0) {
@@ -144,12 +165,17 @@ void revealBoxNumbers(int index) {
     });
   }
 }
+
 void restartGame(){
   setState(() {
     bombsRevealed = false;
     for (int i=0; i<numberOfSquares; i++){
       squareStatus[i][1] = false;
+      scanBombs();
     }
+    duration = Duration.zero;
+
+    startTimer();
   });
 }
 void scanBombs() {
@@ -216,8 +242,17 @@ void scanBombs() {
   }
 
 }
+void stopTimer(){
+  setState(() {
+    timer?.cancel();
+
+
+  });
+}
 
 void playerLost() {
+
+  stopTimer();
   showDialog(
       context: context,
       builder: (context){
@@ -239,6 +274,7 @@ void playerLost() {
 }
 
 void playerWon(){
+  startTimer();
   showDialog(
       context: context,
       builder: (context){
@@ -271,6 +307,7 @@ void checkWinner(){
     playerWon();
   }
 }
+
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +343,7 @@ void checkWinner(){
                 Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text('0', style: TextStyle(fontSize: 40)),
+                    Text('${duration.inSeconds}', style: TextStyle(fontSize: 40)),
                     Text('T I M E')
 
                   ],
